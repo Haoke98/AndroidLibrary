@@ -15,9 +15,9 @@ public class MyScrollPickerAdapter<T> extends RecyclerView.Adapter<MyScrollPicke
     private List<T> mDataList;
     private int visibleItemNum;
     private int selectedItemOffset;
-    private int textSize;
+    private float textSize;
 
-    public MyScrollPickerAdapter(List list, int selectedItemOffset, int visibleItemNum, int textSize) {
+    public MyScrollPickerAdapter(List list, int selectedItemOffset, int visibleItemNum, float textSize) {
         setData(list, selectedItemOffset, visibleItemNum, textSize);
     }
 
@@ -34,7 +34,7 @@ public class MyScrollPickerAdapter<T> extends RecyclerView.Adapter<MyScrollPicke
         T data = mDataList.get(position);
         holder.textView.setText(data == null ? "" : data.toString());
         holder.itemView.setTag(mDataList.get(position));
-        holder.textView.setTextSize(18);
+        holder.textView.setTextSize(textSize);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class MyScrollPickerAdapter<T> extends RecyclerView.Adapter<MyScrollPicke
         return mDataList.size();
     }
 
-    public void setData(List list, int selectedItemOffset, int visibleItemNum, int textSize) {
+    public void setData(List list, int selectedItemOffset, int visibleItemNum, float textSize) {
         this.selectedItemOffset = selectedItemOffset;
         this.visibleItemNum = visibleItemNum;
         this.textSize = textSize;

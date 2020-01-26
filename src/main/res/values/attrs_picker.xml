@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--    -->
+    <attr name="divideLineColor" format="color" />
+    <attr name="selectedItemColor" format="color" />
+    <attr name="unselectedItemColor" format="color" />
+    <attr name="selectedItemTextSize" format="dimension" />
+    <attr name="unselectedItemTextSize" format="dimension" />
+    <attr name="visibleItemNum" format="integer" />
+    <attr name="selectedItemOffset" format="integer" />
+    <declare-styleable name="MyScrollPicker">
+        <attr name="divideLineColor" />
+        <attr name="selectedItemColor" />
+        <attr name="unselectedItemColor" />
+        <attr name="selectedItemTextSize" />
+        <attr name="unselectedItemTextSize" />
+        <attr name="visibleItemNum" />
+        <attr name="selectedItemOffset" />
+    </declare-styleable>
+</resources>

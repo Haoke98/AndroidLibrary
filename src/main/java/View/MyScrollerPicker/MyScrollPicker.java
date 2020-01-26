@@ -1,6 +1,7 @@
 package View.MyScrollerPicker;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,11 +17,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.sadam.sadamlibarary.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import View.MyScrollerPicker.util.ScreenUtil;
 
-public class MyScrollPicker extends RecyclerView {
+public class MyScrollPicker<T> extends RecyclerView {
 
     /**
      * 以下是可以自定义的参数属性
@@ -28,13 +30,13 @@ public class MyScrollPicker extends RecyclerView {
     private int divideLineColor = Color.RED;
     private int selectedItemColor = Color.BLUE;
     private int unselectedItemColor = Color.GREEN;
-    private int selectedItemTextSize = 18;
-    private int unselectedItemTextSize = 14;
-    private int visibleItemNum = 5;
-    private int selectedItemOffset = 2;
+    private float selectedItemTextSize;
+    private float unselectedItemTextSize;
+    private int visibleItemNum = 3;
+    private int selectedItemOffset = 1;
     private OnScrollSelectListener onScrollSelectListener;
+    private List<T> dataList = new ArrayList<>();
     private int selectedItemPosition;
-
     private Paint mBgPaint;
     private int mItemHeight;
     private int mItemWidth;
@@ -45,45 +47,38 @@ public class MyScrollPicker extends RecyclerView {
     private Runnable mSmoothScrollTask;
     private int maxItemH;
     private int maxItemW;
-    private List dataList;
-
-    public MyScrollPicker(@NonNull Context context) {
-        this(context,null);
-    }
-
-    public MyScrollPicker(@NonNull Context context, @Nullable AttributeSet attrs) {
-        this(context,attrs,0);
-    }
-
     public MyScrollPicker(@NonNull Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initTask();
+        try {
+            TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MyScrollPicker);
+            divideLineColor = typedArray.getColor(R.styleable.MyScrollPicker_divideLineColor, Color.RED);
+            selectedItemColor = typedArray.getColor(R.styleable.MyScrollPicker_selectedItemColor, Color.BLUE);
+            unselectedItemColor = typedArray.getColor(R.styleable.MyScrollPicker_unselectedItemColor, Color.GREEN);
+            selectedItemTextSize = typedArray.getDimension(R.styleable.MyScrollPicker_selectedItemTextSize, 18);
+            unselectedItemTextSize = typedArray.getInteger(R.styleable.MyScrollPicker_unselectedItemTextSize, 14);
+            visibleItemNum = typedArray.getInteger(R.styleable.MyScrollPicker_visibleItemNum, 5);
+            selectedItemOffset = typedArray.getInteger(R.styleable.MyScrollPicker_selectedItemOffset, 2);
+            typedArray.recycle();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * 在ScrollPickerView滚动结束后调整item视图的位置，使得被选中的item视图刚好位于两条分割线中。
-     */
-    private void initTask() {
-        mSmoothScrollTask = new Runnable() {
-            @Override
-            public void run() {
-                int newY = getScrollYDistance();
-                if (mInitialY != newY) {//这个比较是为了处理在mSmoothScrollTask刚要执行的时候用户又突然滑动的状况，这种状况下显然没有必要进行调整，所以直接结束当前任务，然后再触发一次mSmoothScrollTask任务即可。
-                    mInitialY = getScrollYDistance();
-                    postDelayed(mSmoothScrollTask, 30);
-                } else if (mItemHeight > 0) {
-                    final int offset = mInitialY % mItemHeight;//离选中区域中心的偏移量
-                    if (offset == 0) {//item 刚好落在两条分割线的中间，无需调整
-                        return;
-                    }
-                    if (offset >= mItemHeight / 2) {//滚动区域超过了item高度的1/2,item视图滚动到了两条分割线的中间现的下方 调整position的值
-                        smoothScrollBy(0, mItemHeight - offset);
-                    } else if (offset < mItemHeight / 2) {//中间偏上，向上调整（就是把那个上面只露出1/4的item给上移移出去
-                        smoothScrollBy(0, -offset);
-                    }
-                }
-            }
-        };
+    public MyScrollPicker(@NonNull Context context) {
+        this(context, null);
+    }
+
+    public MyScrollPicker(@NonNull Context context, @Nullable AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public T getSelectedItem() {
+        return dataList.get(selectedItemPosition);
+    }
+
+    public void setSelectedItem(T t) {
+        setSelectedPosition(dataList.indexOf(t));
     }
 
     /**
@@ -140,8 +135,39 @@ public class MyScrollPicker extends RecyclerView {
         }
     }
 
-    public void setSelectedPosition(int position) {
-        selectedItemPosition = position;
+    /**
+     * 在ScrollPickerView滚动结束后调整item视图的位置，使得被选中的item视图刚好位于两条分割线中。
+     */
+    private void initTask() {
+        for (int i = 0; i < visibleItemNum + visibleItemNum / 2; i++) {
+            dataList.add((T) ("item:" + i));
+        }
+        mSmoothScrollTask = new Runnable() {
+            @Override
+            public void run() {
+                int newY = getScrollYDistance();
+                if (mInitialY != newY) {//这个比较是为了处理在mSmoothScrollTask刚要执行的时候用户又突然滑动的状况，这种状况下显然没有必要进行调整，所以直接结束当前任务，然后再触发一次mSmoothScrollTask任务即可。
+                    mInitialY = getScrollYDistance();
+                    postDelayed(mSmoothScrollTask, 30);
+                } else if (mItemHeight > 0) {
+                    final int offset = mInitialY % mItemHeight;//离选中区域中心的偏移量
+                    if (offset == 0) {//item 刚好落在两条分割线的中间，无需调整
+                        return;
+                    }
+                    if (offset >= mItemHeight / 2) {//滚动区域超过了item高度的1/2,item视图滚动到了两条分割线的中间现的下方 调整position的值
+                        smoothScrollBy(0, mItemHeight - offset);
+                    } else if (offset < mItemHeight / 2) {//中间偏上，向上调整（就是把那个上面只露出1/4的item给上移移出去
+                        smoothScrollBy(0, -offset);
+                    }
+                }
+            }
+        };
+    }
+
+    private void setSelectedPosition(int newSelectedItemPosition) {
+        int distanceY = (newSelectedItemPosition - selectedItemPosition) * mItemHeight;
+        smoothScrollBy(0, distanceY);
+        selectedItemPosition = newSelectedItemPosition;
     }
 
 
@@ -188,15 +214,10 @@ public class MyScrollPicker extends RecyclerView {
     private void freshItemView() {
         for (int i = 0; i < getChildCount(); i++) {
             float itemViewY = getChildAt(i).getTop() + mItemHeight / 2;
-            updateView(getChildAt(i), mFirstLineY < itemViewY && itemViewY < mSecondLineY);
+            updateView(getChildAt(i), mFirstLineY < itemViewY && itemViewY < mSecondLineY, i);
         }
     }
 
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-        smoothScrollToPosition(selectedItemOffset + selectedItemPosition);
-    }
 
     /**
      * 把itemView 有没有被选中这个结果传给 接口IPickerViewOperation の updateView 方法
@@ -204,7 +225,7 @@ public class MyScrollPicker extends RecyclerView {
      * @param itemView
      * @param isSelected
      */
-    private void updateView(View itemView, boolean isSelected) {
+    private void updateView(View itemView, boolean isSelected, int position) {
         TextView textView = itemView.findViewById(R.id.tv_content);
         textView.setTextSize(isSelected ? selectedItemTextSize : unselectedItemTextSize);
         textView.setTextColor(isSelected ? selectedItemColor : unselectedItemColor);
@@ -218,9 +239,11 @@ public class MyScrollPicker extends RecyclerView {
         }
         itemView.setMinimumHeight(maxItemH);
         itemView.setMinimumWidth(maxItemW);
-        if (isSelected && onScrollSelectListener != null) {
-            onScrollSelectListener.onScroll(itemView);
-
+        if (isSelected) {
+            selectedItemPosition = dataList.indexOf(itemView.getTag());
+            if (onScrollSelectListener != null) {
+                onScrollSelectListener.onScroll(itemView);
+            }
         }
     }
 
@@ -282,10 +305,12 @@ public class MyScrollPicker extends RecyclerView {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(linearLayoutManager);
 //        if(selectedItemPosition != null){
-        setSelectedPosition(selectedItemPosition);
+//        setSelectedPosition(selectedItemPosition);
 //        }else{
 
 //        }
+        freshItemView();
+        smoothScrollToPosition(dataList.size() / 2);
     }
 
     /**
