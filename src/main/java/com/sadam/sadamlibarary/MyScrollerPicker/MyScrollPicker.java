@@ -1,4 +1,4 @@
-package View.MyScrollerPicker;
+package com.sadam.sadamlibarary.MyScrollerPicker;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -15,12 +15,11 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.sadam.sadamlibarary.MyScrollerPicker.util.ScreenUtil;
 import com.sadam.sadamlibarary.R;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import View.MyScrollerPicker.util.ScreenUtil;
 
 public class MyScrollPicker<T> extends RecyclerView {
 

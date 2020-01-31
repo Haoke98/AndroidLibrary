@@ -1,4 +1,4 @@
-package View.MyScrollerPicker;
+package com.sadam.sadamlibarary.MyScrollerPicker;
 
 import android.view.View;
 

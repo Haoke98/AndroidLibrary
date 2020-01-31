@@ -17,6 +17,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.sadam.sadamlibarary.Utils.StaticUtils;
+
 import org.litepal.crud.DataSupport;
 
 import java.io.File;
@@ -30,8 +32,9 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.HashMap;
 
-import static com.sadam.sadamlibarary.Tools.getDeclaredSetMethod;
-import static com.sadam.sadamlibarary.Tools.isLightColor;
+import static com.sadam.sadamlibarary.Utils.StaticUtils.getDeclaredSetMethod;
+import static com.sadam.sadamlibarary.Utils.StaticUtils.isLightColor;
+
 
 public abstract class MyActivity extends AppCompatActivity {
     public static final byte  TAKE_PHOTO=1;
@@ -40,7 +43,7 @@ public abstract class MyActivity extends AppCompatActivity {
     private static final short SOFTKEYBOARDMINHEIGHT=200;
 
     public static void logE(String warning) {
-        Log.d("",StaticUtils.getCodeInfo(new Throwable())+warning+"\n \n");
+        Log.d("", StaticUtils.getCodeInfo(new Throwable()) + warning + "\n \n");
     }
 
     @Override
