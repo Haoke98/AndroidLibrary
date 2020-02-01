@@ -113,11 +113,20 @@ public abstract class MyActivity extends AppCompatActivity {
     public void onSoftKeyBoardPopUp() {
     }
 
-    public void SadamReplaceFragment(int containerLayout_id, Fragment fragment) {
+    public Fragment SadamReplaceFragment(int containerLayout_id, Fragment currentFragment, Fragment targetFragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(containerLayout_id, fragment);
+        if (!targetFragment.isAdded()) {
+            if (!(currentFragment == null)) {
+                transaction.hide(currentFragment);
+            }
+            transaction.add(containerLayout_id, targetFragment);
+        } else {
+            transaction.hide(currentFragment);
+            transaction.show(targetFragment);
+        }
         transaction.commit();
+        return targetFragment;
     }
 
     public void logE(Class clazz, String warning) {
@@ -297,36 +306,36 @@ public abstract class MyActivity extends AppCompatActivity {
                             if (sqlite_columns_name != null) {
                                 Method method = getDeclaredSetMethod(object.getClass(),field);
                                 Class<?> dataType = field.getType();
-                                Log.e("filed",field.getName());
-                                Log.e("field.type",dataType+"");
-                                Log.e("method",method.getName());
+                                Log.e("filed", field.getName());
+                                Log.e("field.type", dataType + "");
+                                Log.e("method", method.getName());
                                 int columnIndex = cursor.getColumnIndex(sqlite_columns_name);
-                                Log.e("columnIndex",""+columnIndex);
+                                Log.e("columnIndex", "" + columnIndex);
                                 Object data = null;
                                 if (dataType.isAssignableFrom(String.class)) {
                                     data = cursor.getString(columnIndex);
-                                } else if (dataType.isAssignableFrom(Integer.TYPE)||dataType.isAssignableFrom(Integer.class)) {
+                                } else if (dataType.isAssignableFrom(Integer.TYPE) || dataType.isAssignableFrom(Integer.class)) {
                                     data = cursor.getInt(columnIndex);
                                 } else if(dataType.isAssignableFrom(Date.class)){
                                     data = new Date(cursor.getInt(columnIndex));
-                                }  else if (dataType.isAssignableFrom(Long.TYPE)||dataType.isAssignableFrom(Long.class)) {
+                                } else if (dataType.isAssignableFrom(Long.TYPE) || dataType.isAssignableFrom(Long.class)) {
                                     data = cursor.getLong(columnIndex);
-                                }   else {
+                                } else {
                                     data = cursor.getBlob(columnIndex);
                                 }
-                                Log.e("data",data+"");
+                                Log.e("data", data + "");
 
                                 method.invoke(object, data);
                             } else {
                             }
                         }
-                        if(justTryNotWrite){
-                            if(object.save()){
+                        if (justTryNotWrite) {
+                            if (object.save()) {
                                 System.out.println(" saved successfully.");
-                            }else{
+                            } else {
                                 System.out.println("saved failed.");
                             }
-                        }else{
+                        } else {
                             System.out.println("just try not to save.");
                         }
                     } catch (IllegalAccessException e) {

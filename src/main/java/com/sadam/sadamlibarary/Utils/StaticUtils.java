@@ -18,6 +18,9 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.sadam.sadamlibarary.AppInfo;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -195,5 +198,37 @@ public class StaticUtils {
         }
         mediaPlayer.setDisplay(surfaceView.getHolder());
         mediaPlayer.start();
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.P)
+    public static void UpgradeAlert(String message, final Context context, AppInfo appInfo) {
+        try {
+            JSONObject jsonObject = new JSONObject(message);
+            int newVersionCode = jsonObject.getInt("versionCode");
+            String newVersionName = jsonObject.getString("versionName");
+            String messages = jsonObject.getString("messages");
+            final String download_url = jsonObject.getString("download_url");
+            if (appInfo.getVersionCode() < newVersionCode) {
+                AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+                dialog.setTitle("更新通知");
+                dialog.setMessage("有内容更新......\nV" + appInfo.getVersionName() + "  -->  V" + newVersionName + "\n" + messages + "\n要不要更新？");
+                dialog.setCancelable(true);
+                dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        openWebsiteOnSystemWebBrowser(context, download_url);
+                    }
+                });
+                dialog.setNegativeButton("下次吧", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                dialog.show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

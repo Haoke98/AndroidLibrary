@@ -81,7 +81,7 @@ abstract class InputStreamHadler{
 
 public class HttpRequest{
 
-    public void send(final Handler handler, String url) {
+    public static void send(final Handler handler, String url) {
         new Thread(new Reader(url, new InputStreamHadler(handler) {
             @Override
             public void handle(InputStream inputStream) {

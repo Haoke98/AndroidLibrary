@@ -1,6 +1,5 @@
 package com.sadam.sadamlibarary.BluetoothUtils;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Toast;
@@ -10,9 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.sadam.sadamlibarary.BluetoothUtils.Reader.Reader;
 
 public abstract class Connected extends AppCompatActivity {
-    private final static String TAG = "Connected";
+    public final static String ADDRESS_INTENT_KEY = "ADDRESS";
     protected Reader reader;
-    private SharedPreferences sharedPreferences;
     private String address;
 
     protected Connected() {
@@ -23,8 +21,7 @@ public abstract class Connected extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        sharedPreferences = getSharedPreferences("config", MODE_PRIVATE);
-        address = sharedPreferences.getString("address", null);
+        address = getIntent().getStringExtra(ADDRESS_INTENT_KEY);
 
 
         if (TextUtils.isEmpty(address)) {

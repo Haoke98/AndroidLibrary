@@ -46,6 +46,7 @@ public class MyScrollPicker<T> extends RecyclerView {
     private Runnable mSmoothScrollTask;
     private int maxItemH;
     private int maxItemW;
+
     public MyScrollPicker(@NonNull Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initTask();
