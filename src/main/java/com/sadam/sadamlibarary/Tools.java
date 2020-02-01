@@ -10,6 +10,9 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -72,30 +75,33 @@ public class Tools {
 
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    public static void UpgradeAlert(String message, final Context context, AppInfo appInfo, final String url_for_upgrade) {
-        int index1 = message.indexOf("|");
-        int index2 = message.indexOf("/");
-        long newVersionCode = Long.valueOf(message.substring(0, index1));
-        String newVersionName = message.substring(index1 + 1, index2);
-        String text = message.substring(index2 + 1);
-        System.out.println(text);
-        if (appInfo.getVersionCode() < newVersionCode) {
-            AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-            dialog.setTitle("更新通知");
-            dialog.setMessage("有内容更新......\nV" + appInfo.getVersionName() + "  -->  V" + newVersionName + "\n" + text + "\n要不要更新？");
-            dialog.setCancelable(true);
-            dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Tools.openWebsiteOnSystemWebBrowser(context, url_for_upgrade);
-                }
-            });
-            dialog.setNegativeButton("下次吧", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
-            dialog.show();
+    public static void UpgradeAlert(String message, final Context context, AppInfo appInfo) {
+        try {
+            JSONObject jsonObject = new JSONObject(message);
+            int newVersionCode = jsonObject.getInt("versionCode");
+            String newVersionName = jsonObject.getString("versionName");
+            String messages = jsonObject.getString("messages");
+            final String download_url = jsonObject.getString("download_url");
+            if (appInfo.getVersionCode() < newVersionCode) {
+                AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+                dialog.setTitle("更新通知");
+                dialog.setMessage("有内容更新......\nV" + appInfo.getVersionName() + "  -->  V" + newVersionName + "\n" + messages + "\n要不要更新？");
+                dialog.setCancelable(true);
+                dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Tools.openWebsiteOnSystemWebBrowser(context, download_url);
+                    }
+                });
+                dialog.setNegativeButton("下次吧", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                dialog.show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }

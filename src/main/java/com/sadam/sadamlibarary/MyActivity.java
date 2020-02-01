@@ -36,11 +36,20 @@ public abstract class MyActivity extends AppCompatActivity {
     }
 
 
-    public void SadamReplaceFragment(int containerLayout_id, Fragment fragment) {
+    public Fragment SadamReplaceFragment(int containerLayout_id, Fragment currentFragment, Fragment targetFragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(containerLayout_id, fragment);
+        if (!targetFragment.isAdded()) {
+            if (!(currentFragment == null)) {
+                transaction.hide(currentFragment);
+            }
+            transaction.add(containerLayout_id, targetFragment);
+        } else {
+            transaction.hide(currentFragment);
+            transaction.show(targetFragment);
+        }
         transaction.commit();
+        return targetFragment;
     }
 
     public void logE(Class clazz, String warning) {
