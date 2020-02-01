@@ -168,10 +168,12 @@ public class StaticUtils {
         mediaPlayer.release();
     }
 
-    public static void stopMediaPlayer(MediaPlayer mediaPlayer) {
+    public static int stopMediaPlayer(MediaPlayer mediaPlayer) {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
+            return mediaPlayer.getCurrentPosition();
         }
+        return 0;
     }
 
     private static void playVideo(Context context, MediaPlayer mediaPlayer, SurfaceView surfaceView, int resources) {
@@ -187,7 +189,7 @@ public class StaticUtils {
         mediaPlayer.start();
     }
 
-    public static void playMusic(Context context, MediaPlayer mediaPlayer, int resources) {
+    public static void playMusic(Context context, MediaPlayer mediaPlayer, int resources, int currentPositon) {
         mediaPlayer.reset();
         Uri uri = Uri.parse("android.resource://com.sadam.bluetoothcontroler/" + resources);
         try {
@@ -197,6 +199,7 @@ public class StaticUtils {
             e.printStackTrace();
         }
 //        mediaPlayer.setDisplay(surfaceView.getHolder());
+        mediaPlayer.seekTo(currentPositon);
         mediaPlayer.start();
     }
 
