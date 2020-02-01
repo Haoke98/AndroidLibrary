@@ -11,12 +11,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
-import android.speech.tts.TextToSpeech;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Set;
+import com.sadam.sadamlibarary.BluetoothUtils.BluetoothDevicesArrayList.BluetoothDeviceToString;
+import com.sadam.sadamlibarary.BluetoothUtils.BluetoothDevicesArrayList.BluetoothDevicesArrayList;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.Manifest.permission;
 
@@ -32,13 +33,14 @@ public class BluetoothManager {
 
     private BluetoothAdapter bluetoothAdapter;
     /**
-     * 用于储存给ListView提供的蓝牙设备的信息,已配对的设备信息
+     * 用于储存蓝牙设备的信息,已配对的设备信息 或者 附近未配对的设备（为了方便得到String）
      */
-    private ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<>();
-    /**
-     * 游戏类别，根据值决定要启动 哪一个游戏对应的活动和监听线程
-     */
-    private TextToSpeech tts;
+    private BluetoothDevicesArrayList bluetoothDevicesArrayList = new BluetoothDevicesArrayList(new BluetoothDeviceToString() {
+        @Override
+        public String toString(BluetoothDevice bluetoothDevice) {
+            return bluetoothDevice.getName();
+        }
+    });
     private Activity activity;
     private OnFoundTargetDeviceListener onFoundTargetDeviceListener;
     private ProgressDialog progressDialog;
@@ -77,11 +79,11 @@ public class BluetoothManager {
 //                            onFoundTargetDeviceListener.handle(device);
 //                        }
 //                    }
-                    bluetoothDevices.add(device);
+                    bluetoothDevicesArrayList.add(device);
                     break;
                 case BluetoothAdapter.ACTION_DISCOVERY_FINISHED:
-                    Toast.makeText(context, "扫描结束，请连接蓝牙设备", Toast.LENGTH_LONG).show();
-                    if (bluetoothDevices.size() == 0) {
+                    progressDialog.dismiss();
+                    if (bluetoothDevicesArrayList.size() == 0) {
                         AlertDialog.Builder dialog = new AlertDialog.Builder(activity);
                         dialog.setTitle("BluetoothManager");
                         dialog.setMessage("扫描结束，附近没有找到可连接的蓝牙设备");
@@ -95,20 +97,18 @@ public class BluetoothManager {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 dialog.dismiss();
+
                             }
                         });
                         dialog.show();
                     } else {
-                        String[] devicesString = new String[bluetoothDevices.size()];
-                        for (int i = 0; i < bluetoothDevices.size(); i++) {
-                            devicesString[i] = bluetoothDevices.get(i).getName();
-                        }
                         AlertDialog.Builder dialog = new AlertDialog.Builder(activity);
                         dialog.setTitle("附近未配对的蓝牙设备");
-                        dialog.setSingleChoiceItems(devicesString, 0, new DialogInterface.OnClickListener() {
+                        dialog.setSingleChoiceItems(bluetoothDevicesArrayList.toArray(), 0, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                getBone_and_Start(bluetoothDevices.get(which));
+                                getBone_and_Start(bluetoothDevicesArrayList.get(which));
+                                dialog.dismiss();
                             }
                         });
                         dialog.setNegativeButton("重新扫描", new DialogInterface.OnClickListener() {
@@ -160,7 +160,7 @@ public class BluetoothManager {
 //            Toast.makeText(this,"本机拥有蓝牙传感器",Toast.LENGTH_LONG).show();
             /*调用isEnable()方法判断蓝牙打开状态还是关闭状态*/
             if (bluetoothAdapter.isEnabled()) {
-
+                showBondedDevicesList();
             } else {
                 /*如果蓝牙关闭状态，则创建一个Intent对象，该对象启动一个Activity,提示用户打开蓝牙，即启动蓝牙适配器*/
                 Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -175,27 +175,11 @@ public class BluetoothManager {
             activity.requestPermissions(new String[]{permission.ACCESS_COARSE_LOCATION, permission.BLUETOOTH_PRIVILEGED}, PERMISSION_REQUEST_COARSE_LOCATION);
         }
 
-        tts = new TextToSpeech(activity, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                /*如果加载引擎成功*/
-                if (status == TextToSpeech.SUCCESS) {
-                    /*设置使用中文朗读*/
-                    int result = tts.setLanguage(Locale.CHINA);
-                    /*如果不支持所设置的语言*/
-                    if (result != TextToSpeech.LANG_COUNTRY_AVAILABLE && result != TextToSpeech.LANG_AVAILABLE) {
-                        Toast.makeText(activity, "TTS暂时不支持这种语言朗读！", Toast.LENGTH_LONG).show();
-                    } else {
-                        tts.speak("朗读功能正常", TextToSpeech.QUEUE_FLUSH, null, "111");
-                        Toast.makeText(activity, "朗读功能正常", Toast.LENGTH_LONG).show();
-                    }
-                }
-            }
-        });
+
 
         progressDialog = new ProgressDialog(activity);
         progressDialog.setTitle("Bluetooth Manager");
-        progressDialog.setMessage("正在努力争取附近还未配对的设备...");
+        progressDialog.setMessage("正在扫描附近努力争取附近还未配对的设备...");
         progressDialog.setCancelable(true);
         progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
@@ -204,7 +188,7 @@ public class BluetoothManager {
                     /*如果是正在扫描，则取消扫描*/
                     bluetoothAdapter.cancelDiscovery();
                 }
-                bluetoothDevices.clear();
+                bluetoothDevicesArrayList.clear();
             }
         });
     }
@@ -217,25 +201,18 @@ public class BluetoothManager {
             /*如果是正在扫描，则取消扫描*/
             bluetoothAdapter.cancelDiscovery();
         }
-        bluetoothDevices.clear();
-        Set<BluetoothDevice> pairedDevices_set = bluetoothAdapter.getBondedDevices();
-        final ArrayList<BluetoothDevice> pairedDevices = new ArrayList<>();
-        String[] devicesNameList = new String[pairedDevices_set.size()];
-        int i = 0;
-        for (BluetoothDevice device : pairedDevices_set) {
-            pairedDevices.add(device);
-            devicesNameList[i++] = device.getName();
-        }
-        if (pairedDevices.size() > 0) {
+        bluetoothDevicesArrayList.clear();
+        bluetoothDevicesArrayList.setDevicesFromSet(bluetoothAdapter.getBondedDevices());
+        if (bluetoothDevicesArrayList.size() > 0) {
             AlertDialog.Builder dialog = new AlertDialog.Builder(activity);
             dialog.setTitle("已配对的蓝牙设备");
-            dialog.setSingleChoiceItems(devicesNameList, 0, new DialogInterface.OnClickListener() {
+            dialog.setSingleChoiceItems(bluetoothDevicesArrayList.toArray(), 0, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    onFoundTargetDeviceListener.handle(pairedDevices.get(which));
+                    onFoundTargetDeviceListener.handle(bluetoothDevicesArrayList.get(which));
                     dialog.dismiss();
                     activity.unregisterReceiver(receiver);
-                    tts.shutdown();
+
                 }
             });
             dialog.setNegativeButton("扫描附近的可用设备", new DialogInterface.OnClickListener() {
@@ -255,7 +232,7 @@ public class BluetoothManager {
 //                    Toast.makeText(this,""+device.getName()+device.getAddress(),Toast.LENGTH_LONG).show();
 
         } else {
-            Toast.makeText(activity, "没有找到已配对的设备", Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, "本机还没有已配对的蓝牙设备", Toast.LENGTH_LONG).show();
             scanRemoteDevices();
         }
     }
@@ -263,8 +240,25 @@ public class BluetoothManager {
 
     private void getBone_and_Start(BluetoothDevice device) {
         if (device.getBondState() == BluetoothDevice.BOND_NONE) {
-            tts.speak("快要进入配对模式,当配对窗口弹出来时输入1234，并确认。", TextToSpeech.QUEUE_FLUSH, null, "111");
+            final ProgressDialog dialog = new ProgressDialog(activity);
+            dialog.setMessage("快要进入配对模式,当配对窗口弹出来时输入1234，并确认。");
+            dialog.setCancelable(true);
+            dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    dialog.dismiss();
+                }
+            });
+            dialog.show();
             device.createBond();
+            TimerTask timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    dialog.dismiss();
+                }
+            };
+            Timer timer = new Timer();
+            timer.schedule(timerTask, 2000);
         } else {
             onFoundTargetDeviceListener.handle(device);
         }
@@ -272,6 +266,7 @@ public class BluetoothManager {
 
 
     private void scanRemoteDevices() {
+        bluetoothDevicesArrayList.clear();
         progressDialog.show();
         /*开始扫描*/
         bluetoothAdapter.startDiscovery();

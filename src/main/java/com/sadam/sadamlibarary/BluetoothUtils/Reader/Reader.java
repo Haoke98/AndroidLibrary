@@ -25,8 +25,9 @@ public class Reader extends Thread {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothSocket bluetoothSocket;
 
-    public Reader(String addressj, OnReadListener onReadListener) {
+    public Reader(String address, OnReadListener onReadListener) {
         this.address = address;
+        this.onReadListener = onReadListener;
     }
 
     public static String byteToHex(byte b) {
@@ -56,6 +57,16 @@ public class Reader extends Thread {
         } else {
 //            Toast.makeText(MyApplication.getContext(), "not", Toast.LENGTH_LONG).show();
             Log.d(TAG, "no");
+        }
+    }
+
+    public void desTroy() {
+        this.RUN_STATE = false;
+        try {
+            this.inputStream.close();
+            this.bluetoothSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -508,15 +519,7 @@ public class Reader extends Thread {
 //            }
 //        }
 //    }
-    public void desTroy() {
-        this.RUN_STATE = false;
-        try {
-            this.inputStream.close();
-            this.bluetoothSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+
 
 //    @Override
 //    public void run() {

@@ -26,7 +26,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class StaticUtils {
-    private static final byte MAXFLOOR = 3;
+    private static final byte MAX_FLOOR = 3;
 
     public static String getCodeInfo(Throwable throwable) {
         String s = "";
@@ -37,7 +37,7 @@ public class StaticUtils {
                 continue;
             }
             s += stackTraceElement.toString() + "" + "\n";
-            if (i++ == MAXFLOOR) {
+            if (i++ == MAX_FLOOR) {
                 break;
             }
         }
@@ -159,22 +159,9 @@ public class StaticUtils {
         float newIntervalSize = newMaxValue - newMinValue;
         float realValue = value - minValue;
         float percentage = realValue / oldInterValSize;
-        float newValue = newMinValue + percentage * newIntervalSize;
-        return newValue;
+        return percentage * newIntervalSize;
     }
 
-    public static void play(Context context, MediaPlayer mediaPlayer, int resources) {
-        mediaPlayer.reset();
-        Uri uri = Uri.parse("android.resource://com.sadam.bluetoothcontroler/" + resources);
-        try {
-            mediaPlayer.setDataSource(context, uri);
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-//        mediaPlayer.setDisplay(surfaceView.getHolder());
-        mediaPlayer.start();
-    }
 
     public static void releaseMediaPlayer(MediaPlayer mediaPlayer) {
         stopMediaPlayer(mediaPlayer);
@@ -187,7 +174,7 @@ public class StaticUtils {
         }
     }
 
-    private static void play(Context context, MediaPlayer mediaPlayer, SurfaceView surfaceView, int resources) {
+    private static void playVideo(Context context, MediaPlayer mediaPlayer, SurfaceView surfaceView, int resources) {
         mediaPlayer.reset();
         Uri uri = Uri.parse("android.resource://com.sadam.bluetoothcontroler/" + resources);
         try {
@@ -197,6 +184,19 @@ public class StaticUtils {
             e.printStackTrace();
         }
         mediaPlayer.setDisplay(surfaceView.getHolder());
+        mediaPlayer.start();
+    }
+
+    public static void playMusic(Context context, MediaPlayer mediaPlayer, int resources) {
+        mediaPlayer.reset();
+        Uri uri = Uri.parse("android.resource://com.sadam.bluetoothcontroler/" + resources);
+        try {
+            mediaPlayer.setDataSource(context, uri);
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        mediaPlayer.setDisplay(surfaceView.getHolder());
         mediaPlayer.start();
     }
 
@@ -231,4 +231,6 @@ public class StaticUtils {
             e.printStackTrace();
         }
     }
+
+
 }

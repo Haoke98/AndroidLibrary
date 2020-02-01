@@ -324,11 +324,12 @@ public class MyScrollPicker<T> extends RecyclerView {
         }
     }
 
-    public void setOnScrollSelectListener(OnScrollSelectListener onScrollSelectListener) {
-        this.onScrollSelectListener = onScrollSelectListener;
-    }
 
     public void setDataList(List dataList) {
         this.dataList = dataList;
+    }
+
+    public void setOnScrollSelectListener(OnScrollSelectListener onScrollSelectListener_) {
+        onScrollSelectListener = onScrollSelectListener_;
     }
 }

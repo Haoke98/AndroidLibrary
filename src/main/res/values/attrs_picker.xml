@@ -17,4 +17,9 @@
         <attr name="visibleItemNum" />
         <attr name="selectedItemOffset" />
     </declare-styleable>
+    <declare-styleable name="ButtonLikeHeart">
+        <attr name="liked_icon" format="color" />
+        <attr name="unLiked_icon" format="integer|color" />
+        <attr name="liked" format="boolean" />
+    </declare-styleable>
 </resources>
