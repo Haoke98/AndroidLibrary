@@ -1,16 +1,24 @@
 package com.sadam.sadamlibarary;
 
+import android.content.ContentUris;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -38,12 +46,28 @@ import static com.sadam.sadamlibarary.Utils.StaticUtils.isLightColor;
 
 public abstract class MyActivity extends AppCompatActivity {
     public static final byte  TAKE_PHOTO=1;
+    protected static final byte PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 2;
+    private static final byte CHOOSE_PHOTO_FROM_ALBUM = 2;
     private static final String TAG = MyActivity.class.getSimpleName();
     private static int rootViewVisibleHeight;
-    private static final short SOFTKEYBOARDMINHEIGHT=200;
+    private static final short SOFT_KEYBOARD_MIN_HEIGHT = 200;
+    private OnHandleImagePath onHandleImagePathOnActivityResult;
 
     public static void logE(String warning) {
         Log.d("", StaticUtils.getCodeInfo(new Throwable()) + warning + "\n \n");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE:
+                if (grantResults.length > 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "you granted the permission:WRITE EXTERNAL STORAGE.", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "you denied the permission:WRITE EXTERNAL STORAGE.", Toast.LENGTH_LONG).show();
+                }
+        }
     }
 
     @Override
@@ -62,11 +86,12 @@ public abstract class MyActivity extends AppCompatActivity {
                 int rootViewVisibleHeight_aferReDraw = rect1.height();
                 if(rootViewVisibleHeight==0){
                     rootViewVisibleHeight = rootViewVisibleHeight_aferReDraw;
-                }else if(rootViewVisibleHeight==rootViewVisibleHeight_aferReDraw){}else if(rootViewVisibleHeight-rootViewVisibleHeight_aferReDraw>SOFTKEYBOARDMINHEIGHT){
+                } else if (rootViewVisibleHeight == rootViewVisibleHeight_aferReDraw) {
+                } else if (rootViewVisibleHeight - rootViewVisibleHeight_aferReDraw > SOFT_KEYBOARD_MIN_HEIGHT) {
                     /*如果视图显示高度变小超过了200，可看作是键盘显示了*/
                     onSoftKeyBoardPopUp();
                     rootViewVisibleHeight = rootViewVisibleHeight_aferReDraw;
-                }else if(rootViewVisibleHeight_aferReDraw-rootViewVisibleHeight>SOFTKEYBOARDMINHEIGHT){
+                } else if (rootViewVisibleHeight_aferReDraw - rootViewVisibleHeight > SOFT_KEYBOARD_MIN_HEIGHT) {
                     /*如果视图高度变大超过200,可看作键盘收起了*/
                     onSoftKeyBoardPutAway();
                     rootViewVisibleHeight = rootViewVisibleHeight_aferReDraw;
@@ -397,5 +422,56 @@ public abstract class MyActivity extends AppCompatActivity {
             final String dbfile_absolutelyPath = dbPath + db_filename;
             return dbfile_absolutelyPath;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case CHOOSE_PHOTO_FROM_ALBUM:
+                if (resultCode == RESULT_OK) {
+                    if (onHandleImagePathOnActivityResult != null) {
+                        onHandleImagePathOnActivityResult.handle(getImagePathOnKitKatByUri(data.getData()));
+                    }
+                }
+        }
+    }
+
+    protected String getImagePathOnKitKatByUri(Uri uri) {
+        String imagePath = null;
+        if (DocumentsContract.isDocumentUri(this, uri)) {
+            String docId = DocumentsContract.getDocumentId(uri);
+            if ("com.android.providers.media.documents".equals(uri.getAuthority())) {
+                String id = docId.split(":")[1];
+                String selection = MediaStore.Images.Media._ID + "=" + id;
+                imagePath = getImagePath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection);
+            } else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
+                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(docId));
+                imagePath = getImagePath(contentUri, null);
+            }
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            imagePath = getImagePath(uri, null);
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            imagePath = uri.getPath();
+        }
+        return imagePath;
+    }
+
+    private String getImagePath(Uri externalContentUri, String selection) {
+        String path = null;
+        Cursor cursor = getContentResolver().query(externalContentUri, null, selection, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            }
+            cursor.close();
+        }
+        return path;
+    }
+
+    public void openAlbum() {
+        Intent intent = new Intent("android.intent.action.GET_CONTENT");
+        intent.setType("image/*");
+        startActivityForResult(intent, CHOOSE_PHOTO_FROM_ALBUM);
     }
 }
