@@ -1,4 +1,4 @@
-package MySQL;
+package com.sadam.sadamlibarary.MySQL;
 
 import android.util.Log;
 

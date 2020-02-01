@@ -1,11 +1,12 @@
 package com.sadam.sadamlibarary.Layouts;
 
 import android.content.Context;
-import android.support.constraint.ConstraintLayout;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 public class MyConstraintLayout extends ConstraintLayout {
     public MyConstraintLayout(Context context) {
