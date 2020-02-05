@@ -42,6 +42,11 @@ public class BluetoothManager {
         }
     });
     private Activity activity;
+
+    public BluetoothManager(Activity activity) {
+        this(activity, null);
+    }
+
     private OnFoundTargetDeviceListener onFoundTargetDeviceListener;
     private ProgressDialog progressDialog;
     /**
@@ -154,6 +159,30 @@ public class BluetoothManager {
 //        /*注册监听配对的监听器*/
 //        intentFilter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST);
         activity.registerReceiver(receiver, intentFilter);
+
+
+        progressDialog = new ProgressDialog(activity);
+        progressDialog.setTitle("Bluetooth Manager");
+        progressDialog.setMessage("正在扫描附近努力争取附近还未配对的设备...");
+        progressDialog.setCancelable(true);
+        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                if (bluetoothAdapter.isDiscovering()) {
+                    /*如果是正在扫描，则取消扫描*/
+                    bluetoothAdapter.cancelDiscovery();
+                }
+                bluetoothDevicesArrayList.clear();
+            }
+        });
+    }
+
+    public void setOnFoundTargetDeviceListener(OnFoundTargetDeviceListener onFoundTargetDeviceListener) {
+        this.onFoundTargetDeviceListener = onFoundTargetDeviceListener;
+    }
+
+    public void init(OnFoundTargetDeviceListener onFoundTargetDeviceListener) {
+        setOnFoundTargetDeviceListener(onFoundTargetDeviceListener);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         /*判断BluetoothAdapter对象是否为空，如果空，则表明本机没有蓝牙传感器*/
         if (bluetoothAdapter != null) {
@@ -174,29 +203,12 @@ public class BluetoothManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             activity.requestPermissions(new String[]{permission.ACCESS_COARSE_LOCATION, permission.BLUETOOTH_PRIVILEGED}, PERMISSION_REQUEST_COARSE_LOCATION);
         }
-
-
-
-        progressDialog = new ProgressDialog(activity);
-        progressDialog.setTitle("Bluetooth Manager");
-        progressDialog.setMessage("正在扫描附近努力争取附近还未配对的设备...");
-        progressDialog.setCancelable(true);
-        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                if (bluetoothAdapter.isDiscovering()) {
-                    /*如果是正在扫描，则取消扫描*/
-                    bluetoothAdapter.cancelDiscovery();
-                }
-                bluetoothDevicesArrayList.clear();
-            }
-        });
     }
 
     /**
      * 获取已配对的设备
      */
-    public void showBondedDevicesList() {
+    private void showBondedDevicesList() {
         if (bluetoothAdapter.isDiscovering()) {
             /*如果是正在扫描，则取消扫描*/
             bluetoothAdapter.cancelDiscovery();
@@ -209,7 +221,9 @@ public class BluetoothManager {
             dialog.setSingleChoiceItems(bluetoothDevicesArrayList.toArray(), 0, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    onFoundTargetDeviceListener.handle(bluetoothDevicesArrayList.get(which));
+                    if (onFoundTargetDeviceListener != null) {
+                        onFoundTargetDeviceListener.handle(bluetoothDevicesArrayList.get(which));
+                    }
                     dialog.dismiss();
                     activity.unregisterReceiver(receiver);
 
@@ -260,7 +274,9 @@ public class BluetoothManager {
             Timer timer = new Timer();
             timer.schedule(timerTask, 2000);
         } else {
-            onFoundTargetDeviceListener.handle(device);
+            if (onFoundTargetDeviceListener != null) {
+                onFoundTargetDeviceListener.handle(device);
+            }
         }
     }
 
